@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absureal - AI Image & Prompt Generator</title>
+    <meta name="description" content="Generate stunning AI images, enhance prompts, analyze images, and chat with AI assistant">
+    <meta name="keywords" content="AI, image generation, prompt enhancement, image analysis, chat AI">
+    <meta name="author" content="Absureal AI">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="assets/images/icons/favicon.ico">
+    
+    <!-- Stylesheets -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="public/manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Absureal - AI Image & Prompt Generator">
+    <meta property="og:description" content="Generate stunning AI images, enhance prompts, analyze images, and chat with AI assistant">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://absureal.ai">
+    <meta property="og:image" content="assets/images/screenshots/og-image.png">
+</head>
+<body class="neuromorphic-bg min-h-screen p-4 md:p-6">
+    <!-- Notification System -->
+    <div id="notification" class="notification"></div>
+    <div id="toast" class="toast"></div>
+    
+    <!-- Theme Toggle - Fixed Position -->
+    <div class="theme-toggle-fixed">
+        <button id="themeToggle" class="neuromorphic-btn" title="Toggle dark/light mode" aria-label="Toggle dark/light mode">
+            <i class="fas fa-moon text-blue-600"></i>
+        </button>
+    </div>
+    
+<!-- Fullscreen Editor Modal -->
+    <div id="fullscreenOverlay" class="fullscreen-overlay fixed inset-0 z-50 hidden">
+        <div class="max-w-4xl mx-auto p-6 h-full flex flex-col">
+            <div class="neuromorphic-card p-6 flex-grow flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold text-blue-700">Fullscreen Prompt Editor</h3>
+                    <button id="closeFullscreen" class="neuromorphic-btn p-3" aria-label="Close fullscreen editor">
+                        <i class="fas fa-times text-blue-600"></i>
+                    </button>
+                </div>
+                <textarea 
+                    id="fullscreenTextarea" 
+                    class="neuromorphic-input flex-grow p-4 resize-none focus:outline-none"
+                    placeholder="Describe your image in detail... (e.g., A majestic dragon flying over a medieval castle at sunset, highly detailed, fantasy art style)"
+                    aria-label="Fullscreen prompt editor"
+                ></textarea>
+                <div class="flex flex-wrap gap-2 mt-4">
+                    <button class="neuromorphic-btn tag-btn p-2 px-3 text-sm" onclick="insertAtCursor('masterpiece, best quality, 4k, ultra-detailed')" aria-label="Add quality tags">
+                        Quality Tags
+                    </button>
+                    <button class="neuromorphic-btn tag-btn p-2 px-3 text-sm" onclick="insertAtCursor('cinematic lighting, dramatic, atmospheric')" aria-label="Add lighting tags">
+                        Lighting
+                    </button>
+                    <button class="neuromorphic-btn tag-btn p-2 px-3 text-sm" onclick="insertAtCursor('photorealistic, detailed, sharp focus')" aria-label="Add realism tags">
+                        Realism
+                    </button>
+                    <button class="neuromorphic-btn tag-btn p-2 px-3 text-sm" onclick="insertAtCursor('vibrant colors, colorful, vivid')" aria-label="Add color tags">
+                        Colors
+                    </button>
+                    <button class="neuromorphic-btn tag-btn p-2 px-3 text-sm" onclick="insertAtCursor('high contrast, bold, striking')" aria-label="Add contrast tags">
+                        Contrast
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application Container -->
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section - Image Only -->
+        <!-- Ganti bagian header di index.html -->
+<header class="header-container">
+  <img src="Imagebackground.jpg" alt="Absureal AI" class="header-image">
+</header>        
+        <!-- Main Navigation Tabs -->
+        <nav class="tabs-container" aria-label="Main navigation">
+            <button class="tab-button neuromorphic-btn active" data-tab="image-generator" title="Image Generator" aria-label="Image Generator tab" aria-selected="true">
+                <i class="fas fa-image text-blue-600"></i>
+            </button>
+            <button class="tab-button neuromorphic-btn" data-tab="prompt-enhancer" title="Prompt Enhancer" aria-label="Prompt Enhancer tab" aria-selected="false">
+                <i class="fas fa-wand-magic-sparkles text-blue-600"></i>
+            </button>
+            <button class="tab-button neuromorphic-btn" data-tab="image-analysis" title="Image Analysis" aria-label="Image Analysis tab" aria-selected="false">
+                <i class="fas fa-search text-blue-600"></i>
+            </button>
+            <button class="tab-button neuromorphic-btn" data-tab="chat-assistant" title="Chat Assistant" aria-label="Chat Assistant tab" aria-selected="false">
+                <i class="fas fa-comments text-blue-600"></i>
+            </button>
+        </nav>
+        
+        <!-- Main Content Area -->
+        <main>
+            <!-- Image Generator Tab -->
+            <section id="image-generator" class="tab-content active" role="tabpanel" aria-labelledby="image-generator-tab">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left Column - Controls -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Prompt Section -->
+                        <article class="neuromorphic-card p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-xl font-semibold text-blue-700">Image Prompt</h2>
+                                <div class="flex gap-2">
+                                    <button id="clearPrompt" class="neuromorphic-btn p-2" title="Clear Prompt" aria-label="Clear prompt">
+                                        <i class="fas fa-eraser text-blue-600"></i>
+                                    </button>
+                                    <button id="fullscreenBtn" class="neuromorphic-btn p-2" title="Fullscreen Editor" aria-label="Open fullscreen editor">
+                                        <i class="fas fa-expand text-blue-600"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <textarea 
+                                id="prompt" 
+                                class="neuromorphic-input w-full p-4 h-32 resize-none focus:outline-none"
+                                placeholder="Describe the image you want to generate... (e.g., A serene landscape with mountains, a lake, and a sunset)"
+                                aria-label="Image generation prompt"
+                            ></textarea>
+                            
+                            <div class="mt-4">
+                                <label for="negativePrompt" class="block text-sm font-medium text-blue-700 mb-2">Negative Prompt</label>
+                                <div class="flex gap-2">
+                                    <input 
+                                        id="negativePrompt" 
+                                        type="text" 
+                                        class="neuromorphic-input flex-grow p-3 text-sm focus:outline-none"
+                                        placeholder="What to exclude from the image... (e.g., blurry, low quality, text)"
+                                        aria-label="Negative prompt - things to avoid in the image"
+                                    >
+                                    <button id="clearNegativePrompt" class="neuromorphic-btn p-3" aria-label="Clear negative prompt">
+                                        <i class="fas fa-eraser text-blue-600"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                        
+                        <!-- Settings Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Basic Settings -->
+                            <article class="neuromorphic-card p-6">
+                                <h3 class="text-lg font-semibold text-blue-700 mb-4">Basic Settings</h3>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="model" class="block text-sm font-medium text-blue-700 mb-2">AI Model</label>
+                                        <select id="model" class="neuromorphic-input w-full p-3 text-sm" aria-label="Select AI model">
+                                            <option value="stable-diffusion-xl">Stable Diffusion XL</option>
+                                            <option value="flux">Flux</option>
+                                            <option value="turbo">Turbo</option>
+                                            <option value="gptimage">GPT Image</option>
+                                            <option value="kandinsky">Kandinsky</option>
+                                            <option value="openjourney">OpenJourney</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label for="width" class="block text-sm font-medium text-blue-700 mb-2">Width</label>
+                                            <select id="width" class="neuromorphic-input w-full p-3 text-sm" aria-label="Image width">
+                                                <option value="512">512px</option>
+                                                <option value="768">768px</option>
+                                                <option value="1024" selected>1024px</option>
+                                                <option value="1280">1280px</option>
+                                                <option value="1536">1536px</option>
+                                                <option value="2048">2048px</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="height" class="block text-sm font-medium text-blue-700 mb-2">Height</label>
+                                            <select id="height" class="neuromorphic-input w-full p-3 text-sm" aria-label="Image height">
+                                                <option value="512">512px</option>
+                                                <option value="768">768px</option>
+                                                <option value="1024" selected>1024px</option>
+                                                <option value="1280">1280px</option>
+                                                <option value="1536">1536px</option>
+                                                <option value="2048">2048px</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="steps" class="block text-sm font-medium text-blue-700 mb-2">
+                                            Steps: <span id="stepsValue">25</span>
+                                        </label>
+                                        <input 
+                                            id="steps" 
+                                            type="range" 
+                                            min="10" 
+                                            max="100" 
+                                            value="25" 
+                                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            aria-label="Generation steps slider"
+                                        >
+                                        <div class="text-xs text-gray-500 mt-1">More steps = higher quality, longer generation time</div>
+                                    </div>
+                                </div>
+                            </article>
+                            
+                            <!-- Advanced Settings -->
+                            <article class="neuromorphic-card p-6">
+                                <h3 class="text-lg font-semibold text-blue-700 mb-4">Advanced Settings</h3>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="style" class="block text-sm font-medium text-blue-700 mb-2">Style</label>
+                                        <select id="style" class="neuromorphic-input w-full p-3 text-sm" aria-label="Art style">
+                                            <option value="">None</option>
+                                            <option value="photographic">Photographic</option>
+                                            <option value="anime">Anime</option>
+                                            <option value="oil-painting">Oil Painting</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="technique" class="block text-sm font-medium text-blue-700 mb-2">Absureal</label>
+                                        <select id="technique" class="neuromorphic-input w-full p-3 text-sm" aria-label="Rendering technique">
+                                            <option value="">None</option>
+                                            <option value="hyper-detailed">Hyper Detailed</option>
+                                            <option value="cinematic">Cinematic</option>
+                                            <option value="minimalist">Minimalist</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="sampler" class="block text-sm font-medium text-blue-700 mb-2">Sampler</label>
+                                        <select id="sampler" class="neuromorphic-input w-full p-3 text-sm" aria-label="Sampling method">
+                                            <option value="DPM++ 2M Karras">DPM++ 2M Karras</option>
+                                            <option value="Euler A">Euler A</option>
+                                            <option value="DDIM">DDIM</option>
+                                            <option value="DPMSolverMultistep">DPMSolverMultistep</option>
+                                            <option value="Heun">Heun</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+    <label for="imageCount" class="block text-sm font-medium text-blue-700 mb-2">
+        Number of Images
+    </label>
+    <select id="imageCount" class="neuromorphic-input w-full p-3 text-sm" aria-label="Number of images to generate">
+        <option value="1">1 Image</option>
+        <option value="2">2 Images</option>
+        <option value="3">3 Images</option>
+        <option value="4">4 Images</option>
+    </select>
+                                    </div>
+
+                                    <div class="setting-group">
+    <label for="enhancePrompt" class="setting-label">
+        <i class="fas fa-magic text-purple-600"></i>
+        AI Prompt Enhancement
+    </label>
+    <div class="relative">
+        <input type="checkbox" id="enhancePrompt" class="neuromorphic-checkbox" checked>
+        <label for="enhancePrompt" class="checkbox-label">Use AI to add detail to prompt (recommended)</label>
+    </div>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label for="imageFormat" class="block text-sm font-medium text-blue-700 mb-2">Format</label>
+                                            <select id="imageFormat" class="neuromorphic-input w-full p-3 text-sm" aria-label="Image format">
+                                                <option value="jpg">JPG</option>
+                                                <option value="png">PNG</option>
+                                                <option value="webp">WEBP</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="qualityEnhance" class="block text-sm font-medium text-blue-700 mb-2">Quality</label>
+                                            <select id="qualityEnhance" class="neuromorphic-input w-full p-3 text-sm" aria-label="Quality enhancement">
+                                                <option value="0">Standard</option>
+                                                <option value="1">Enhanced</option>
+                                                <option value="2">Premium</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <label for="seed" class="block text-sm font-medium text-blue-700 mb-2">Seed</label>
+                                            <input 
+                                                id="seed" 
+                                                type="number" 
+                                                class="neuromorphic-input w-32 p-2 text-sm"
+                                                placeholder="Random"
+                                                aria-label="Random seed for reproducible results"
+                                            >
+                                        </div>
+                                        <div class="flex flex-col gap-2">
+                                            <div class="flex items-center gap-2">
+                                                <input 
+                                                    id="safeMode" 
+                                                    type="checkbox" 
+                                                    class="rounded neuromorphic-input"
+                                                    checked
+                                                    aria-label="Enable safe mode"
+                                                >
+                                                <label for="safeMode" class="text-sm text-blue-700">Safe Mode</label>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <input 
+                                                    id="watermark" 
+                                                    type="checkbox" 
+                                                    class="rounded neuromorphic-input"
+                                                    checked
+                                                    aria-label="Add watermark"
+                                                >
+                                                <label for="watermark" class="text-sm text-blue-700">Watermark "absureal"</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button id="generateBtn" class="neuromorphic-btn p-4 flex items-center justify-center gap-2 text-lg font-medium" aria-label="Generate image">
+                                <span id="generateBtnText">Generate Image</span>
+                                <div id="generateSpinner" class="hidden">
+                                    <i class="fas fa-spinner fa-spin text-blue-600"></i>
+                                </div>
+                            </button>
+                            
+                            <button id="randomizeBtn" class="neuromorphic-btn p-4 flex items-center justify-center gap-2" disabled aria-label="Randomize settings">
+                                <i class="fas fa-random text-blue-600"></i>
+                                <span>Randomize</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column - Preview & History -->
+                    <div class="space-y-6">
+                        <!-- Image Preview -->
+                        <article class="neuromorphic-card p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-xl font-semibold text-blue-700">Generated Image</h2>
+                                <button id="downloadBtn" class="neuromorphic-btn p-2" disabled aria-label="Download image">
+                                    <i class="fas fa-download text-blue-600"></i>
+                                </button>
+                            </div>
+                            
+                            <div id="previewContainer" class="image-preview-container neuromorphic-card-inset flex items-center justify-center p-4" aria-live="polite">
+                                <div id="placeholder" class="text-center text-gray-500">
+                                    <i class="fas fa-image text-4xl mb-2 opacity-50"></i>
+                                    <p>Your generated image will appear here</p>
+                                </div>
+                                
+                                <div id="loadingSpinner" class="hidden text-center">
+                                    <div class="loading-spinner text-4xl text-gray-600 mb-4">
+                                        <i class="fas fa-spinner text-blue-600"></i>
+                                    </div>
+                                    <p class="text-gray-600">Generating your image...</p>
+                                    <p class="text-sm text-gray-500 mt-2">This may take 30-60 seconds</p>
+                                </div>
+                                
+                                <img 
+                                    id="generatedImage" 
+                                    class="hidden max-w-full h-auto rounded-lg"
+                                    style="display: none;"
+                                    alt="Generated AI image"
+                                >
+                            </div>
+                        </article>
+                        
+                        <!-- Generation History -->
+                        <article class="neuromorphic-card p-6">
+                            <h2 class="text-xl font-semibold text-blue-700 mb-4">Generation History</h2>
+                            <div id="historyList" class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar" aria-label="Image generation history">
+                                <p class="text-sm text-gray-500 text-center py-4">Your generation history will appear here</p>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Prompt Enhancer Tab -->
+            <section id="prompt-enhancer" class="tab-content" role="tabpanel" aria-labelledby="prompt-enhancer-tab" hidden>
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    <!-- Left Column - Input & Controls -->
+                    <div class="xl:col-span-2 space-y-6">
+                        <!-- Prompt Input Section -->
+                        <article class="neuromorphic-card p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-xl font-semibold text-blue-700">Original Prompt</h2>
+                                <div class="flex gap-2">
+                                    <button id="analyzePromptBtn" class="neuromorphic-btn p-2" title="Analyze Prompt Quality" aria-label="Analyze prompt quality">
+                                        <i class="fas fa-chart-line text-blue-600"></i>
+                                    </button>
+                                    <button id="clearPromptEnhancer" class="neuromorphic-btn p-2 hidden" title="Clear Prompt" aria-label="Clear prompt">
+                                        <i class="fas fa-eraser text-blue-600"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <textarea 
+                                id="promptEnhancer" 
+                                class="neuromorphic-input w-full p-4 h-32 resize-none focus:outline-none"
+                                placeholder="Enter your basic prompt here... (e.g., 'a beautiful sunset over mountains')"
+                                aria-label="Prompt to enhance"
+                            ></textarea>
+                            
+                            <!-- Prompt Analysis -->
+                            <div id="promptAnalysis" class="mt-4 hidden" aria-live="polite">
+                                <div class="grid grid-cols-3 gap-4 text-xs">
+                                    <div class="text-center">
+                                        <div class="font-medium text-blue-700 mb-1">Detail Level</div>
+                                        <div class="quality-indicator">
+                                            <div id="detailLevel" class="quality-fill quality-low" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <div id="detailScore" class="text-xs text-gray-500 mt-1">0%</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="font-medium text-blue-700 mb-1">Creativity</div>
+                                        <div class="quality-indicator">
+                                            <div id="creativityLevel" class="quality-fill quality-low" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <div id="creativityScore" class="text-xs text-gray-500 mt-1">0%</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="font-medium text-blue-700 mb-1">Specificity</div>
+                                        <div class="quality-indicator">
+                                            <div id="specificityLevel" class="quality-fill quality-low" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <div id="specificityScore" class="text-xs text-gray-500 mt-1">0%</div>
+                                    </div>
+                                </div>
+                                <div id="analysisFeedback" class="text-xs text-gray-600 mt-3 text-center"></div>
+                            </div>
+                        </article>
+                        
+                        <!-- Enhancement Options -->
+                        <article class="neuromorphic-card p-6">
+                            <h2 class="text-xl font-semibold text-blue-700 mb-4">Enhancement Options</h2>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Model Selection -->
+                                <div>
+                                    <label for="promptModelSelect" class="block text-sm font-medium text-blue-700 mb-2">AI Model</label>
+                                    <select id="promptModelSelect" class="neuromorphic-input w-full p-3 text-sm" aria-label="Select AI model for prompt enhancement">
+                                        <option value="openai-large">GPT-4.1 Standard</option>
+                                        <option value="openai">GPT-4.1 Mini</option>
+                                        <option value="mirexa">Mirexa AI</option>
+                                        <option value="openai-fast">GPT-4.1 Nano</option>
+                                    </select>
+                                    <p id="modelDescription" class="text-xs text-gray-500 mt-2">
+                                        GPT-4.1 Standard - Most capable version with full features
+                                    </p>
+                                </div>
+                                
+                                <!-- Enhancement Style -->
+                                <div>
+                                    <label for="enhancementStyle" class="block text-sm font-medium text-blue-700 mb-2">Enhancement Style</label>
+                                    <select id="enhancementStyle" class="neuromorphic-input w-full p-3 text-sm" aria-label="Enhancement style">
+                                        <option value="creative">Creative & Artistic</option>
+                                        <option value="technical">Technical & Detailed</option>
+                                        <option value="cinematic">Cinematic & Dramatic</option>
+                                        <option value="realistic">Photorealistic</option>
+                                        <option value="fantasy">Fantasy & Mythical</option>
+                                        <option value="minimalist">Minimalist & Clean</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Additional Options -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                <label class="flex items-center gap-2">
+                                    <input type="checkbox" id="addLighting" checked class="rounded neuromorphic-input" aria-label="Add lighting details">
+                                    <span class="text-sm text-blue-700">Add Lighting Details</span>
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input type="checkbox" id="addComposition" checked class="rounded neuromorphic-input" aria-label="Add composition details">
+                                    <span class="text-sm text-blue-700">Add Composition</span>
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input type="checkbox" id="addArtStyle" checked class="rounded neuromorphic-input" aria-label="Add art style">
+                                    <span class="text-sm text-blue-700">Add Art Style</span>
+                                </label>
+                            </div>
+                        </article>
+                        
+                        <!-- Generate Button -->
+                        <button id="generatePromptBtn" class="neuromorphic-btn w-full p-4 flex items-center justify-center gap-3 text-lg font-medium" aria-label="Enhance prompt">
+                            <i class="fas fa-wand-magic-sparkles text-blue-600"></i>
+                            <span>Enhance Prompt</span>
+                            <div id="promptGeneratorLoading" class="hidden">
+                                <i class="fas fa-spinner loading-spinner text-blue-600"></i>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <!-- Right Column - Results -->
+                    <div class="space-y-6">
+                        <!-- Enhanced Prompts -->
+                        <article class="neuromorphic-card p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-xl font-semibold text-blue-700">Enhanced Prompts</h2>
+                                <div class="text-xs text-gray-500">
+                                    <i class="fas fa-lightbulb mr-1"></i>
+                                    Click to use any prompt
+                                </div>
+                            </div>
+                            
+                            <div id="promptSuggestions" class="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar" aria-label="Enhanced prompt suggestions">
+                                <!-- Placeholder State -->
+                                <div class="text-center py-12 text-gray-500">
+                                    <i class="fas fa-sparkles text-4xl mb-4 opacity-50"></i>
+                                    <p>Enter a prompt and click "Enhance" to generate creative variations</p>
+                                </div>
+                            </div>
+                        </article>
+                        
+                        <!-- Prompt History -->
+                        <article class="neuromorphic-card p-6">
+                            <h2 class="text-xl font-semibold text-blue-700 mb-4">Recent Prompts</h2>
+                            <div id="promptHistory" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar" aria-label="Prompt enhancement history">
+                                <div class="text-center py-8 text-gray-500">
+                                    <i class="fas fa-history text-2xl mb-2 opacity-50"></i>
+                                    <p class="text-sm">Your enhanced prompts will appear here</p>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Image Analysis Tab -->
+            <section id="image-analysis" class="tab-content" role="tabpanel" aria-labelledby="image-analysis-tab" hidden>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left Column - Image Upload & Preview -->
+                    <div class="space-y-6">
+                        <!-- Model Selection -->
+                        <article class="neuromorphic-card p-6">
+                            <h2 class="text-xl font-semibold text-blue-700 mb-4">Model Configuration</h2>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="model-badge px-3 py-1 rounded-full text-sm font-medium">
+                                        GPT-4.1 Nano
+                                    </div>
+                                    <span class="text-sm text-gray-600">openai-fast</span>
+                                </div>
+                                <div class="text-xs text-green-600 font-medium">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Ready
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">
+                                OpenAI GPT-4.1 Nano via Pollinations.ai API with enhanced vision capabilities
+                            </p>
+                        </article>
+                        
+                        <!-- Upload Section -->
+                        <article class="neuromorphic-card p-6">
+                            <h2 class="text-xl font-semibold text-blue-700 mb-4">Upload Image</h2>
+                            
+                            <div id="dropZone" class="drop-zone neuromorphic-card-inset p-8 text-center rounded-lg cursor-pointer" aria-label="Image upload area">
+                                <div id="uploadPlaceholder" class="space-y-4">
+                                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>
+                                    <div>
+                                        <p class="text-lg font-medium text-blue-700">Click to upload or drag and drop</p>
+                                        <p class="text-sm text-gray-500 mt-1">Supports: JPG, PNG, WEBP (Max 5MB)</p>
+                                    </div>
+                                </div>
+                                
+                                <div id="imagePreview" class="hidden">
+                                    <img id="previewImage" class="max-w-full h-auto rounded-lg mx-auto max-h-64" alt="Uploaded image preview">
+                                    <div class="mt-4 flex justify-center gap-2">
+                                        <button id="changeImageBtn" class="neuromorphic-btn px-4 py-2 text-sm" aria-label="Change image">
+                                            <i class="fas fa-sync-alt mr-2 text-blue-600"></i>Change Image
+                                        </button>
+                                        <button id="removeImageBtn" class="neuromorphic-btn px-4 py-2 text-sm" aria-label="Remove image">
+                                            <i class="fas fa-trash mr-2 text-blue-600"></i>Remove
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <input type="file" id="fileInput" class="hidden" accept="image/jpeg,image/png,image/webp" aria-label="Select image file">
+                            </div>
+                        </article>
+                        
+                        <!-- Analysis Options -->
+                        <article class="neuromorphic-card p-6">
+                            <h2 class="text-xl font-semibold text-blue-700 mb-4">Analysis Type</h2>
+                            <div class="grid grid-cols-3 gap-2 mb-4" role="tablist" aria-label="Analysis type options">
+                                <button id="analyzeTabBtn" class="analysis-tab-button active" data-type="analyze" role="tab" aria-selected="true" aria-controls="analyzePromptSection">
+                                    <i class="fas fa-search mr-2 text-blue-600"></i>Analyze
+                                </button>
+                                <button id="promptTabBtn" class="analysis-tab-button" data-type="prompt" role="tab" aria-selected="false" aria-controls="predefinedPromptSection">
+                                    <i class="fas fa-magic mr-2 text-blue-600"></i>Prompt
+                                </button>
+                                <button id="characterTabBtn" class="analysis-tab-button" data-type="character" role="tab" aria-selected="false" aria-controls="characterPromptSection">
+                                    <i class="fas fa-user mr-2 text-blue-600"></i>Character
+                                </button>
+                            </div>
+                            
+                            <!-- Custom Prompt -->
+                            <div id="analyzePromptSection">
+                                <label for="customPrompt" class="block text-sm font-medium text-blue-700 mb-2">Analysis Question</label>
+                                <textarea 
+                                    id="customPrompt" 
+                                    class="neuromorphic-input w-full p-4 h-24 resize-none focus:outline-none"
+                                    placeholder="What's in this image? Describe it in detail."
+                                    aria-label="Custom analysis prompt"
+                                >What's in this image? Describe it in detail.</textarea>
+                            </div>
+
+                            <!-- Predefined Prompts -->
+                            <div id="predefinedPromptSection" class="hidden">
+                                <label for="promptType" class="block text-sm font-medium text-blue-700 mb-2">Prompt Type</label>
+                                <select id="promptType" class="neuromorphic-input w-full p-3 focus:outline-none" aria-label="Predefined prompt type">
+                                    <option value="detailed">Detailed Image Prompt</option>
+                                    <option value="artistic">Artistic Style Prompt</option>
+                                    <option value="technical">Technical Description</option>
+                                </select>
+                            </div>
+
+                            <!-- Character Analysis -->
+                            <div id="characterPromptSection" class="hidden">
+                                <label for="characterType" class="block text-sm font-medium text-blue-700 mb-2">Character Analysis Type</label>
+                                <select id="characterType" class="neuromorphic-input w-full p-3 focus:outline-none" aria-label="Character analysis type">
+                                    <option value="full">Full Character Analysis</option>
+                                    <option value="facial">Facial Features Only</option>
+                                    <option value="appearance">Appearance & Style</option>
+                                </select>
+                            </div>
+                        </article>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex gap-3">
+                            <button id="analyzeBtn" class="neuromorphic-btn flex-1 p-4 flex items-center justify-center gap-2 text-lg font-medium" disabled aria-label="Analyze image">
+                                <span id="analyzeBtnText">Analyze Image</span>
+                                <div id="analyzeSpinner" class="hidden">
+                                    <i class="fas fa-spinner fa-spin text-blue-600"></i>
+                                </div>
+                            </button>
+                        </div>
+                        
+                        <!-- Image Information -->
+                        <div id="imageInfo" class="neuromorphic-card p-6 hidden" aria-live="polite">
+                            <h2 class="text-xl font-semibold text-blue-700 mb-4">Image Information</h2>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">File Name:</span>
+                                    <span id="fileName" class="font-medium text-gray-800">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">File Size:</span>
+                                    <span id="fileSize" class="font-medium text-gray-800">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Dimensions:</span>
+                                    <span id="imageDimensions" class="font-medium text-gray-800">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Type:</span>
+                                    <span id="imageType" class="font-medium text-gray-800">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column - Analysis Results -->
+                    <div class="space-y-6">
+                        <!-- Analysis Results -->
+                        <article class="neuromorphic-card p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-xl font-semibold text-blue-700" id="resultsTitle">Analysis Results</h2>
+                                <button id="copyResultsBtn" class="neuromorphic-btn p-2" disabled aria-label="Copy results to clipboard">
+                                    <i class="fas fa-copy text-blue-600"></i>
+                                </button>
+                            </div>
+                            
+                            <div id="resultsPlaceholder" class="neuromorphic-card-inset p-8 text-center rounded-lg">
+                                <i class="fas fa-chart-line text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-gray-600">Upload an image and click "Analyze Image" to see results</p>
+                            </div>
+                            
+                            <!-- Analysis Results Content -->
+                            <div id="analysisResults" class="hidden" aria-live="polite">
+                                <!-- Regular Analysis Tab -->
+                                <div id="analysisContent" class="tab-content active">
+                                    <div class="analysis-section">
+                                        <div class="analysis-item neuromorphic-card-inset p-4 rounded-lg">
+                                            <div class="flex items-start gap-3">
+                                                <div class="model-badge px-2 py-1 rounded text-xs font-medium mt-1">
+                                                    GPT-4.1 Nano
+                                                </div>
+                                                <div class="flex-1">
+                                                    <p id="analysisResult" class="text-gray-700 leading-relaxed"></p>
+                                                    <div class="flex items-center gap-2 mt-3 text-xs text-gray-500">
+                                                        <i class="fas fa-clock"></i>
+                                                        <span id="analysisTimestamp"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Prompt Generation Tab -->
+                                <div id="promptContent" class="tab-content">
+                                    <div class="analysis-section">
+                                        <div class="analysis-item neuromorphic-card-inset p-4 rounded-lg">
+                                            <div class="flex items-start gap-3">
+                                                <div class="model-badge px-2 py-1 rounded text-xs font-medium mt-1">
+                                                    Prompt
+                                                </div>
+                                                <div class="flex-1">
+                                                    <div id="promptResult" class="json-display"></div>
+                                                    <div class="flex items-center gap-2 mt-3 text-xs text-gray-500">
+                                                        <i class="fas fa-clock"></i>
+                                                        <span id="promptTimestamp"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Character Analysis Tab -->
+                                <div id="characterContent" class="tab-content">
+                                    <div class="analysis-section">
+                                        <div class="analysis-item neuromorphic-card-inset p-4 rounded-lg">
+                                            <div class="flex items-start gap-3">
+                                                <div class="model-badge px-2 py-1 rounded text-xs font-medium mt-1">
+                                                    Character
+                                                </div>
+                                                <div class="flex-1">
+                                                    <div id="characterResult" class="json-display"></div>
+                                                    <div class="flex items-center gap-2 mt-3 text-xs text-gray-500">
+                                                        <i class="fas fa-clock"></i>
+                                                        <span id="characterTimestamp"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                        
+                        <!-- Analysis History -->
+                        <article class="neuromorphic-card p-6">
+                            <h2 class="text-xl font-semibold text-blue-700 mb-4">Analysis History</h2>
+                            <div id="analysisHistoryList" class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar" aria-label="Image analysis history">
+                                <p class="text-sm text-gray-500 text-center py-4">Your analysis history will appear here</p>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Chat Assistant Tab -->
+            <section id="chat-assistant" class="tab-content" role="tabpanel" aria-labelledby="chat-assistant-tab" hidden>
+                <div class="h-full flex flex-col">
+                    <div class="flex flex-col md:flex-row gap-6 flex-grow">
+                        <!-- Sidebar -->
+                        <aside class="w-full md:w-1/4 flex flex-col gap-6">
+                            <!-- New Chat Button -->
+                            <button id="new-chat" class="neuromorphic-btn p-4 flex items-center justify-center gap-2 text-lg font-medium" aria-label="Start new chat">
+                                <i class="fas fa-plus text-blue-600"></i>
+                                <span>New Chat</span>
+                            </button>
+                            
+                            <!-- Model Selection -->
+                            <div class="neuromorphic-card p-4">
+                                <label for="model-select" class="block text-sm font-medium text-blue-700 mb-2">AI Model</label>
+                                <select id="model-select" class="neuromorphic-input w-full p-3 text-sm" aria-label="Select AI model for chat">
+                                    <option value="openai">OpenAI GPT</option>
+                                    <option value="anthropic">Claude</option>
+                                    <option value="llama">Llama 3</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Conversation History -->
+                            <div class="neuromorphic-card flex-grow p-4 flex flex-col">
+                                <h3 class="font-medium text-blue-700 mb-3">Conversation History</h3>
+                                <div id="history-list" class="custom-scrollbar overflow-y-auto flex-grow space-y-2" aria-label="Chat history">
+                                    <!-- History items will be populated here -->
+                                </div>
+                            </div>
+                        </aside>
+                        
+                        <!-- Main Chat Area -->
+                        <div class="w-full md:w-3/4 flex flex-col gap-6">
+                            <!-- Chat Messages -->
+                            <article class="neuromorphic-card flex-grow p-6 flex flex-col">
+                                <div id="chat-messages" class="custom-scrollbar overflow-y-auto flex-grow space-y-4 mb-4" aria-label="Chat messages" role="log">
+                                    <!-- Messages will be populated here -->
+                                    <div class="text-center text-gray-500 mt-10">
+                                        <i class="fas fa-robot text-4xl mb-2"></i>
+                                        <p>Start a conversation with Absureal</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Chat Controls -->
+                                <div class="chat-controls flex gap-2 mt-4">
+                                    <!-- TTS Toggle will be added here -->
+                                </div>
+                                
+                                <!-- Chat Input -->
+                                <div class="chat-input flex gap-2 mt-4">
+                                    <input 
+                                        id="user-input" 
+                                        type="text" 
+                                        placeholder="Type your message..." 
+                                        class="neuromorphic-input flex-grow p-4 focus:outline-none"
+                                        aria-label="Type your message"
+                                    >
+                                    <button id="send-button" class="neuromorphic-btn p-4 w-16 flex items-center justify-center" aria-label="Send message">
+                                        <i class="fas fa-paper-plane text-blue-600"></i>
+                                    </button>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>Absureal AI &copy; 2024. Powered by Pollinations.ai and OpenAI technologies.</p>
+            <p class="mt-2">
+                <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a> • 
+                <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> • 
+                <a href="#" class="text-blue-600 hover:underline">GitHub</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="js/common.js"></script>
+    <script src="js/imageGenerator.js"></script>
+    <script src="js/promptEnhancer.js"></script>
+    <script src="js/imageAnalysis.js"></script>
+    <script src="js/chatAssistant.js"></script>
+    
+    <!-- Translation Engine (External) -->
+    <script src="https://cdn.jsdelivr.net/npm/@translate-tools/core/dist/translate.min.js"></script>
+</body>
+</html>

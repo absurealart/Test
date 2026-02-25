@@ -21,7 +21,7 @@ const ImageGenerator = (function() {
     
     // API Configuration
     const API_BASE_URL = 'https://gen.pollinations.ai';
-    const API_KEY = 'YOUR_API_KEY'; // Ganti dengan API key Anda
+    const API_KEY = 'sk_UwCiH4XpEOiVRVEIqOtKLr12k18y0LK2'; // Ganti dengan API key Anda
     
     // Zoom State
     let currentZoomLevel = 1;
